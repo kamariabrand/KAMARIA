@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KAMARIA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Bebas+Neue&family=DM+Sans:wght@200;300;400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --espresso: #3D1E0A;
+      --espresso-rich: #4A2510;
+      --camel:    #B07D4A;
+      --copper:   #9E5B2E;
+      --sand:     #D9C4A0;
+      --warm:     #F5EDE0;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      background: #5C2E0E;
+      color: var(--warm);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* CURSOR */
+    .cursor {
+      position: fixed; width: 8px; height: 8px;
+      background: var(--camel); border-radius: 50%;
+      pointer-events: none; z-index: 9999;
+      transform: translate(-50%,-50%);
+      transition: width .3s, height .3s;
+    }
+    .cursor-ring {
+      position: fixed; width: 32px; height: 32px;
+      border: 1px solid rgba(176,125,74,.5); border-radius: 50%;
+      pointer-events: none; z-index: 9998;
+      transform: translate(-50%,-50%);
+      transition: width .3s, height .3s;
+    }
+
+    /* GRAIN */
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 200; opacity: .045;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* WARM VIGNETTE — makes the brown feel deep and rich */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(15,6,0,0.25) 100%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* INTRO */
+    .intro {
+      position: fixed; inset: 0; background: #5C2E0E;
+      z-index: 1000; display: flex; align-items: center; justify-content: center;
+      animation: introOut .8s ease 2.2s forwards;
+    }
+    .intro-k {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 140px; font-weight: 300; color: var(--camel);
+      opacity: 0; letter-spacing: .1em;
+      animation: introK 1.8s ease .2s forwards;
+    }
+    @keyframes introK {
+      0%   { opacity:0; transform:scale(.85); }
+      50%  { opacity:1; transform:scale(1);   }
+      100% { opacity:0; transform:scale(1.08);}
+    }
+    @keyframes introOut { to { opacity:0; pointer-events:none; } }
+
+    /* PAGE */
+    .page { opacity:0; animation: pageIn .6s ease 2.8s forwards; }
+    @keyframes pageIn { to { opacity:1; } }
+
+    /* NAV */
+    nav {
+      position: fixed; top:0; left:0; right:0;
+      padding: 28px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      z-index: 100;
+      background: linear-gradient(to bottom, rgba(42,21,6,0.7), transparent);
+    }
+    .nav-logo { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:.4em; color:var(--warm); }
+    .nav-right { display:flex; gap:24px; align-items:center; }
+    .nav-handle {
+      font-size:10px; letter-spacing:.25em; text-transform:uppercase;
+      color:rgba(217,196,160,.4); text-decoration:none; transition:color .3s;
+      display:flex; align-items:center; gap:7px;
+    }
+    .nav-handle:hover { color:var(--camel); }
+    .nav-handle:hover svg { stroke:var(--camel); }
+    .nav-handle svg { width:13px; height:13px; stroke:rgba(217,196,160,.4); fill:none; stroke-width:1.5; transition:stroke .3s; }
+
+    /* MAIN GRID */
+    .main-grid {
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+    .bg-line {
+      position:absolute; top:0; bottom:0; left:50%;
+      width:1px;
+      background: linear-gradient(to bottom, transparent, rgba(176,125,74,.07) 30%, rgba(176,125,74,.07) 70%, transparent);
+      pointer-events:none;
+    }
+    .bg-number {
+      position:absolute;
+      font-family:'Bebas Neue',sans-serif;
+      font-size: clamp(240px,32vw,480px);
+      color:rgba(176,125,74,.03);
+      line-height:1; right:-20px; bottom:-30px;
+      pointer-events:none; user-select:none; z-index:0;
+    }
+
+    /* LEFT */
+    .col-left {
+      display:flex; flex-direction:column; justify-content:flex-end;
+      padding: 0 0 80px 48px;
+      position:relative; z-index:2;
+    }
+    .hero-issue {
+      font-size:10px; letter-spacing:.4em; text-transform:uppercase;
+      color:var(--copper); margin-bottom:28px;
+      display:flex; align-items:center; gap:14px;
+    }
+    .hero-issue::before { content:''; width:36px; height:1px; background:var(--copper); display:block; }
+    .hero-title {
+      font-family:'Bebas Neue',sans-serif;
+      font-size: clamp(88px,11vw,160px);
+      line-height:.86; letter-spacing:.04em;
+    }
+    .hero-title .outline {
+      -webkit-text-stroke: 1.5px var(--camel);
+      color:transparent; display:block;
+    }
+    .hero-tagline {
+      font-family:'Cormorant Garamond',serif;
+      font-size: clamp(15px,1.5vw,19px);
+      font-style:italic; font-weight:300;
+      color:var(--sand); margin-top:28px;
+      letter-spacing:.06em; line-height:1.7; max-width:280px;
+    }
+
+    /* SCROLL HINT */
+    .scroll-hint {
+      position:absolute; bottom:36px; left:48px;
+      display:flex; flex-direction:column; align-items:center; gap:10px; z-index:3;
+    }
+    .scroll-hint span {
+      font-size:9px; letter-spacing:.35em; text-transform:uppercase;
+      color:rgba(176,125,74,.35); writing-mode:vertical-rl;
+    }
+    .scroll-line {
+      width:1px; height:52px;
+      background: linear-gradient(to bottom, var(--camel), transparent);
+      animation: scrollPulse 2.2s ease-in-out infinite;
+    }
+    @keyframes scrollPulse {
+      0%,100% { opacity:.25; transform:scaleY(.9); }
+      50%      { opacity:.7;  transform:scaleY(1.1); }
+    }
+
+    /* RIGHT */
+    .col-right {
+      display:flex; flex-direction:column; justify-content:center;
+      padding: 120px 48px 80px;
+      position:relative; z-index:2;
+    }
+    .hero-vertical {
+      writing-mode:vertical-rl; font-size:9px; letter-spacing:.4em; text-transform:uppercase;
+      color:rgba(176,125,74,.18); position:absolute; right:24px; top:50%; transform:translateY(-50%);
+    }
+    .form-label {
+      font-size:10px; letter-spacing:.4em; text-transform:uppercase;
+      color:var(--camel); margin-bottom:24px;
+      display:flex; align-items:center; gap:14px;
+    }
+    .form-label::before { content:''; width:24px; height:1px; background:var(--camel); display:block; }
+    .form-headline {
+      font-family:'Cormorant Garamond',serif;
+      font-size: clamp(26px,2.8vw,42px);
+      font-weight:300; line-height:1.2;
+      color:var(--warm); margin-bottom:40px; letter-spacing:.01em;
+    }
+    .form-headline em { font-style:italic; color:var(--camel); }
+
+    .fields { display:flex; flex-direction:column; }
+    .field { border-bottom:1px solid rgba(176,125,74,.18); transition:border-color .3s; }
+    .field:focus-within { border-color:var(--camel); }
+    .field input {
+      width:100%; padding:20px 0; background:transparent; border:none;
+      color:var(--warm); font-family:'DM Sans',sans-serif;
+      font-size:13px; font-weight:300; letter-spacing:.08em; outline:none;
+    }
+    .field input::placeholder {
+      color:rgba(217,196,160,.28); text-transform:uppercase;
+      font-size:10px; letter-spacing:.35em;
+    }
+    .submit-row { margin-top:36px; display:flex; align-items:center; }
+    .submit-btn {
+      background:none; border:none; cursor:none;
+      display:flex; align-items:center; gap:18px; padding:0;
+    }
+    .btn-label {
+      font-family:'Bebas Neue',sans-serif; font-size:12px;
+      letter-spacing:.3em; color:var(--warm); transition:color .3s;
+    }
+    .btn-circle {
+      width:50px; height:50px; border-radius:50%;
+      border:1px solid var(--camel);
+      display:flex; align-items:center; justify-content:center;
+      flex-shrink:0; transition:background .35s, transform .35s;
+    }
+    .btn-circle svg {
+      width:15px; height:15px; stroke:var(--camel); fill:none;
+      stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; transition:stroke .35s;
+    }
+    .submit-btn:hover .btn-circle { background:var(--camel); transform:rotate(45deg); }
+    .submit-btn:hover .btn-circle svg { stroke:var(--espresso); }
+    .submit-btn:hover .btn-label { color:var(--camel); }
+    .form-note {
+      font-size:9px; letter-spacing:.2em; text-transform:uppercase;
+      color:rgba(217,196,160,.2); margin-top:20px;
+    }
+
+    /* SUCCESS */
+    .success { display:none; padding:20px 0; }
+    .success-headline {
+      font-family:'Cormorant Garamond',serif;
+      font-size: clamp(26px,2.8vw,42px);
+      font-weight:300; font-style:italic;
+      color:var(--camel); line-height:1.25; margin-bottom:16px;
+    }
+    .success-sub {
+      font-size:10px; letter-spacing:.3em; text-transform:uppercase;
+      color:rgba(217,196,160,.3);
+    }
+
+    /* RULE */
+    .rule {
+      height:1px;
+      background: linear-gradient(to right, transparent, rgba(176,125,74,.2), rgba(176,125,74,.35), rgba(176,125,74,.2), transparent);
+    }
+
+    /* FOOTER */
+    .footer {
+      padding:28px 48px; display:flex;
+      align-items:center; justify-content:space-between;
+    }
+    .footer-handles { display:flex; gap:20px; }
+    .footer-handle {
+      font-size:10px; letter-spacing:.2em; text-transform:uppercase;
+      color:rgba(217,196,160,.28); text-decoration:none; transition:color .3s;
+      display:flex; align-items:center; gap:7px;
+    }
+    .footer-handle:hover { color:var(--camel); }
+    .footer-handle:hover svg { stroke:var(--camel); }
+    .footer-handle svg { width:12px; height:12px; stroke:rgba(217,196,160,.28); fill:none; stroke-width:1.6; transition:stroke .3s; }
+    .footer-copy { font-size:9px; letter-spacing:.15em; text-transform:uppercase; color:rgba(217,196,160,.18); }
+
+    /* MOBILE */
+    @media (max-width: 768px) {
+      nav { padding:20px 24px; }
+      .main-grid { grid-template-columns:1fr; min-height:auto; }
+      .col-left { padding:110px 24px 48px; justify-content:flex-start; }
+      .col-right { padding:48px 24px 64px; }
+      .hero-vertical { display:none; }
+      .scroll-hint { left:24px; }
+      .footer { padding:24px; flex-direction:column; gap:14px; text-align:center; }
+      .footer-handles { justify-content:center; }
+      .bg-number { font-size:140px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-ring" id="ring"></div>
+  <div class="grain"></div>
+
+  <!-- INTRO -->
+  <div class="intro"><div class="intro-k">K</div></div>
+
+  <!-- PAGE -->
+  <div class="page">
+
+    <nav>
+      <div class="nav-logo">Kamaria</div>
+      <div class="nav-right">
+        <!-- TikTok -->
+        <a href="https://tiktok.com/@kamaria.co" class="nav-handle" target="_blank">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+          </svg>
+          @kamaria.co
+        </a>
+        <!-- Instagram -->
+        <a href="https://instagram.com/kamaria.brand" class="nav-handle" target="_blank">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r=".5" fill="currentColor" stroke="none"/>
+          </svg>
+          @kamaria.brand
+        </a>
+      </div>
+    </nav>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+      <div class="bg-line"></div>
+      <div class="bg-number">01</div>
+
+      <!-- LEFT -->
+      <div class="col-left">
+        <div class="hero-issue">Issue 001 — The First Girls</div>
+        <h1 class="hero-title">
+          KAM<span class="outline">ARIA</span>
+        </h1>
+        <p class="hero-tagline">
+          The girls who find it first<br>will understand.
+        </p>
+        <div class="scroll-hint">
+          <div class="scroll-line"></div>
+          <span>Scroll</span>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="col-right">
+        <div class="hero-vertical">Premium Streetwear · Coming Soon · For the Girls</div>
+
+        <div class="form-label">Limited Access</div>
+        <h2 class="form-headline">
+          You found us<br>
+          before everyone else.<br>
+          <em>Don't waste it.</em>
+        </h2>
+
+        <div id="formWrap">
+          <div class="fields">
+            <div class="field">
+              <input type="text" id="nameInput" placeholder="Your Name" autocomplete="off" />
+            </div>
+            <div class="field">
+              <input type="email" id="emailInput" placeholder="Your Email" autocomplete="off" />
+            </div>
+          </div>
+          <div class="submit-row">
+            <button class="submit-btn" onclick="submitForm()">
+              <span class="btn-label">I Want To Be One Of The Girls</span>
+              <div class="btn-circle">
+                <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+              </div>
+            </button>
+          </div>
+          <p class="form-note">Not everyone gets in — first drop is for the list only.</p>
+        </div>
+
+        <div class="success" id="successMsg">
+          <div class="success-headline">You're in.<br>The girls who know, know.</div>
+          <p class="success-sub">Watch your inbox. Watch our pages.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="rule"></div>
+
+    <div class="footer">
+      <div class="footer-handles">
+        <a href="https://tiktok.com/@kamaria.co" class="footer-handle" target="_blank">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/>
+          </svg>
+          @kamaria.co
+        </a>
+        <a href="https://instagram.com/kamaria.brand" class="footer-handle" target="_blank">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+            <circle cx="12" cy="12" r="4"/>
+            <circle cx="17.5" cy="6.5" r=".5" fill="currentColor" stroke="none"/>
+          </svg>
+          @kamaria.brand
+        </a>
+      </div>
+      <div class="footer-copy">© 2026 Kamaria</div>
+    </div>
+
+  </div>
+
+  <script>
+    const cur = document.getElementById('cursor');
+    const rng = document.getElementById('ring');
+    let x = 0, y = 0;
+    document.addEventListener('mousemove', e => {
+      x = e.clientX; y = e.clientY;
+      cur.style.left = x+'px'; cur.style.top = y+'px';
+    });
+    setInterval(() => { rng.style.left = x+'px'; rng.style.top = y+'px'; }, 55);
+    document.querySelectorAll('a,button,input').forEach(el => {
+      el.addEventListener('mouseenter', () => { cur.style.width='14px'; cur.style.height='14px'; rng.style.width='44px'; rng.style.height='44px'; });
+      el.addEventListener('mouseleave', () => { cur.style.width='8px';  cur.style.height='8px';  rng.style.width='32px'; rng.style.height='32px'; });
+    });
+
+    function submitForm() {
+      const name  = document.getElementById('nameInput').value.trim();
+      const email = document.getElementById('emailInput').value.trim();
+      const re    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const fields = document.querySelectorAll('.field');
+      if (!name)           { fields[0].style.borderColor='var(--copper)'; document.getElementById('nameInput').focus(); return; }
+      if (!re.test(email)) { fields[1].style.borderColor='var(--copper)'; document.getElementById('emailInput').focus(); return; }
+      document.getElementById('formWrap').style.display  = 'none';
+      document.getElementById('successMsg').style.display = 'block';
+      const list = JSON.parse(localStorage.getItem('kamaria_list')||'[]');
+      list.push({ name, email, ts: new Date().toISOString() });
+      localStorage.setItem('kamaria_list', JSON.stringify(list));
+    }
+    document.querySelectorAll('input').forEach(i => {
+      i.addEventListener('keydown', e => { if(e.key==='Enter') submitForm(); });
+    });
+  </script>
+</body>
+</html>
